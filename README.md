@@ -22,8 +22,8 @@ $ docker network create ranger-network
  * Then, run with: 
 
 ```
-$ docker run -p 5432:5432 --name postgres-server --network ranger-network yamounane/ranger-postgresql
-$ docker run -p 6080:6080 -it --network ranger-network yamounane/ranger-admin
+$ docker run -p 5432:5432 --name postgres-server --network ranger-network data/ranger-postgresql
+$ docker run -p 6080:6080 -it --network ranger-network data/ranger-admin
 ```
 
 ## Access 
