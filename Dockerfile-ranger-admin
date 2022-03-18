@@ -6,6 +6,8 @@ COPY scripts/ranger-entrypoint.sh /opt
 
 WORKDIR /opt
 
+ENV MAVEN_OPTS "-Xmx2048m -XX:MaxPermSize=512m"
+
 RUN apt-get -q update && apt-get install -y -q python3 gcc \
  && mkdir apache-ranger-2.2.0 \
  && tar zxf apache-ranger-2.2.0.tar.gz -C apache-ranger-2.2.0
