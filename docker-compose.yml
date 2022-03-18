@@ -2,10 +2,12 @@ version: "2"
 services:
   postgres-server:
     image: bhanu/ranger-postgresql
+    environment:
+      POSTGRES_PASSWORD: security
     ports:
       - "5432:5432"
   ranger-admin:
-    image: bhanu/ranger-admin
+    image: data/ranger-admin
     stdin_open: true
     tty: true
     depends_on:

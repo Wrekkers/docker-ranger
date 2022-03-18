@@ -1,0 +1,77 @@
+FROM centos
+
+RUN mkdir /tools
+WORKDIR /tools
+
+#Install default services
+#RUN yum clean all
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+RUN yum install -y wget
+RUN yum install -y git
+RUN yum install -y gcc python3
+RUN yum install -y bzip2 fontconfig diffutils
+
+#Download and install JDK8 from AWS s3's docker-assets 
+RUN wget https://s3.eu-central-1.amazonaws.com/docker-assets/dist/jdk-8u101-linux-x64.rpm
+RUN rpm -i jdk-8u101-linux-x64.rpm
+
+ENV JAVA_HOME /usr/java/latest
+ENV PATH $JAVA_HOME/bin:$PATH
+
+
+ADD https://www.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz.sha512 /tools
+ADD http://www.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz /tools
+RUN sha512sum  apache-maven-3.6.3-bin.tar.gz | cut -f 1 -d " " > tmp.sha1
+
+RUN diff -w tmp.sha1 apache-maven-3.6.3-bin.tar.gz.sha512
+
+RUN tar xfz apache-maven-3.6.3-bin.tar.gz
+RUN ln -sf /tools/apache-maven-3.6.3 /tools/maven
+
+ENV  PATH /tools/maven/bin:$PATH
+ENV MAVEN_OPTS "-Xmx2048m -XX:MaxPermSize=512m"
+
+# Setup gosu for easier command execution
+# RUN gpg --keyserver keyserver.ubuntu.com --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+#     && curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.10/gosu-amd64" \
+#     && curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.10/gosu-amd64.asc" \
+#     && gpg --verify /usr/local/bin/gosu.asc \
+#     && rm /usr/local/bin/gosu.asc \
+#     && rm -r /root/.gnupg/ \
+#     && chmod +x /usr/local/bin/gosu
+
+# RUN useradd -ms /bin/bash builder
+# RUN usermod -g root builder
+
+ADD https://jdbc.postgresql.org/download/postgresql-42.3.3.jar /opt
+ADD https://dist.apache.org/repos/dist/release/ranger/2.2.0/apache-ranger-2.2.0.tar.gz /opt
+
+COPY scripts/ranger-entrypoint.sh /opt
+
+WORKDIR /opt
+
+RUN mkdir apache-ranger-2.2.0 \
+ && tar zxf apache-ranger-2.2.0.tar.gz -C apache-ranger-2.2.0
+
+# RUN cd apache-ranger-2.2.0 \
+#  && echo "#!/bin/bash" > mvn.sh
+#  && echo 'set -x; if [ "\$1" = "mvn" ]; then usermod -u \$(stat -c "%u" pom.xml) builder; gosu builder bash -c '"'"'ln -sf /.m2 \$HOME'"'"'; exec gosu builder "\$@"; fi; exec "\$@" ' >> mvn.sh
+#  && chmod +x mvn.sh 
+
+RUN cd apache-ranger-2.2.0 \
+ && mvn -Pall -DskipTests=true clean compile package install assembly:assembly
+
+RUN cp target/ranger-2.2.0-admin.tar.gz /opt \
+ && cd /opt \
+ && tar zxf ranger-2.2.0-admin.tar.gz \
+ && chmod +x /opt/ranger-entrypoint.sh
+
+ENV RANGER_HOME=/opt/ranger-2.2.0-admin
+
+RUN ln -s $RANGER_HOME ranger-admin
+
+COPY utils/install.properties ${RANGER_HOME}
+
+EXPOSE 6080
+ENTRYPOINT ["/opt/ranger-entrypoint.sh"]

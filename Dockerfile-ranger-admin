@@ -11,7 +11,7 @@ RUN apt-get -q update && apt-get install -y -q python3 gcc \
  && tar zxf apache-ranger-2.2.0.tar.gz -C apache-ranger-2.2.0
 
 RUN cd apache-ranger-2.2.0 \
- && mvn -Pall -DskipTests=true clean compile package install
+ && mvn -Pall -DskipTests=true clean compile package install assembly:assembly
 
 RUN cp target/ranger-2.2.0-admin.tar.gz /opt \
  && cd /opt \
@@ -20,6 +20,8 @@ RUN cp target/ranger-2.2.0-admin.tar.gz /opt \
 
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
 ENV RANGER_HOME=/opt/ranger-2.2.0-admin
+
+RUN ln -s $RANGER_HOME ranger-admin
 
 COPY utils/install.properties ${RANGER_HOME}
 
