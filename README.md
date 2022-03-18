@@ -3,8 +3,8 @@
 ## Build the docker images as follows:
 
 ```
- $ docker build -t yamounane/ranger-postgresql -f ~/docker-ranger/Dockerfile-postgres ~/docker-ranger/
- $ docker build -t yamounane/ranger-admin -f ~/docker-ranger/Dockerfile-ranger-admin ~/docker-ranger/
+ $ docker build -t data/ranger-postgresql -f ~/docker-ranger/Dockerfile-postgres ~/docker-ranger/
+ $ docker build -t data/ranger-admin -f ~/docker-ranger/Dockerfile-ranger-admin ~/docker-ranger/
  $ docker-compose up
 ```
 
