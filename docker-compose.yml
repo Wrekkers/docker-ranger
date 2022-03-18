@@ -1,7 +1,7 @@
 version: "2"
 services:
   postgres-server:
-    image: bhanu/ranger-postgresql
+    image: data/ranger-postgresql
     environment:
       POSTGRES_PASSWORD: security
     ports:
